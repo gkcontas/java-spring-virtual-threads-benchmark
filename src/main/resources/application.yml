@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: virtual-threads-benchmark
+
+  # The single switch this whole project exists to compare. Off by default so
+  # the platform pool is the baseline; the "virtual" profile turns it on.
+  threads:
+    virtual:
+      enabled: false
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bench
+    username: bench
+    password: bench
+    hikari:
+      # Deliberately small, and deliberately visible in the README: with virtual
+      # threads the request no longer waits for a thread, it waits for one of
+      # these. Raising it moves the bottleneck, it does not remove it.
+      maximum-pool-size: 20
+      connection-timeout: 10000
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  tomcat:
+    threads:
+      # The platform baseline. Tomcat's default is 200; kept explicit so the
+      # two configurations differ in one named value instead of in a default.
+      max: 200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,threaddump
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,250ms,500ms,1s,2s
+
+logging:
+  level:
+    com.gkcontas.vthreads: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: virtual
+  threads:
+    virtual:
+      enabled: true

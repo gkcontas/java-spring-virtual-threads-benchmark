@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vthreads-postgres
+    environment:
+      POSTGRES_DB: bench
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench
+    ports:
+      - "5432:5432"
+    # The pool size here is the ceiling the application's own pool competes for.
+    # Left at the default on purpose: the point of the benchmark is that the
+    # database, not the thread model, becomes the limit.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bench -d bench"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
